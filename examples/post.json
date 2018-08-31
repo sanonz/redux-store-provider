@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "type": "primary",
+    "text": "This is a primary alert—check it out!",
+    "isLike": false
+  },
+  {
+    "id": 2,
+    "type": "secondary",
+    "text": "This is a secondary alert—check it out!",
+    "isLike": true
+  },
+  {
+    "id": 3,
+    "type": "success",
+    "text": "This is a success alert—check it out!",
+    "isLike": false
+  },
+  {
+    "id": 4,
+    "type": "danger",
+    "text": "This is a danger alert—check it out!",
+    "isLike": false
+  },
+  {
+    "id": 5,
+    "type": "warning",
+    "text": "This is a warning alert—check it out!",
+    "isLike": false
+  },
+  {
+    "id": 6,
+    "type": "info",
+    "text": "This is a info alert—check it out!",
+    "isLike": false
+  }
+]
