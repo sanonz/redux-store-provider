@@ -161,7 +161,7 @@ export default class ReduxStoreProvider {
 
   _reducer(state = this._initialState, action) {
     const prefix = this._key + '_';
-    if (!action.type.indexOf(prefix) === 0) {
+    if (action.type.indexOf(prefix) !== 0) {
       return state;
     }
 
@@ -186,7 +186,7 @@ export default class ReduxStoreProvider {
   }
 
   _reducerList(state = this._initialState, action) {
-    if (!action.type.indexOf(this._key + '_') === 0) {
+    if (action.type.indexOf(this._key + '_') !== 0) {
       return state;
     }
 
