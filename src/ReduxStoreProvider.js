@@ -59,15 +59,18 @@ export default class ReduxStoreProvider {
    * @memberof ReduxStoreProvider
    */
   constructor(options = {}) {
-    if (!options.key) {
-      throw new TypeError(`Invalid 'options.key' argument`);
-    }
     if (_cacheKeys.indexOf(this._key) > -1) {
       throw new TypeError(`Reducer: key '${name}' already exists`);
     }
 
     this._key = options.key;
     this._type = options.type;
+    this._time = Date.now();
+
+    if (!this._key) {
+      this._key = this._time.toString(36).toUpperCase();
+      ++this._time;
+    }
 
     this._handlers = {};
     if (this._type === 'list') {

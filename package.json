@@ -1,6 +1,6 @@
 {
   "name": "redux-store-provider",
-  "version": "1.1.0",
+  "version": "1.6.0",
   "description": "redux store provider",
   "main": "dist/redux-store-provider.cjs.js",
   "module": "dist/redux-store-provider.es.js",

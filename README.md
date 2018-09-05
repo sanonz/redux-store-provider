@@ -85,7 +85,7 @@ ReduxStoreProvider.config({
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [options] | `Object` | `{}` | 数据 |
-| options.key | `string` |  | 初始化 Store 的 KEY，必须具有单一性 |
+| options.key | `string` |  | 初始化 Store 的 KEY，必须具有单一性，不传的话会自动生成 |
 | options.type | `string` |  | `single` 单一型，`list` 列表型 |
 | options.initialState | `Object` |  | 初始化 Store，将会覆盖全局默认设置 |
 
