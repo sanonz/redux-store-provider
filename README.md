@@ -1,4 +1,7 @@
 ## ReduxStoreProvider
+
+[![npm](https://img.shields.io/npm/v/redux-store-provider.svg)](https://www.npmjs.com/package/redux-store-provider) ![Github file size](https://img.shields.io/github/size/sanonz/redux-store-provider/dist/redux-store-provider.umd.min.js.svg) ![npm](https://img.shields.io/npm/dw/redux-store-provider.svg)
+
 这个库是为了简化 redux 创建 Action 和 Reducer 的过程，使创建过程语义化，提升应用自明性方便后期维护。
 
 本库把 Store 数据简化分为 `单一型`、`列表型`，单一型就是一个 `Object`，对象上边的属性由开发者所定义。列表型就是一个 `Array`，但是它也包含单一型的数据类型，两者在列表型时可以同时使用，默认扩展了 `total` 字段，来记录列表总条数，如果开发者有需要还可以自定义更多属性。
