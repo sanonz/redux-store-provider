@@ -66,18 +66,20 @@ export default class ReduxStoreProvider {
     this._key = options.key;
     this._type = options.type;
     this._time = Date.now();
+    this._name = null;
 
     if (!this._key) {
       this._key = this._time.toString(36).toUpperCase();
       ++this._time;
     }
 
+    this._action = null;
     this._handlers = {};
     if (this._type === 'list') {
-      this.reducer = this._reducerList.bind(this);
+      this._reducer = this._reducerList.bind(this);
       this._initialState = ReduxStoreProvider.getInitialStateList();
     } else {
-      this.reducer = this._reducer.bind(this);
+      this._reducer = this._reducerSingle.bind(this);
       this._initialState = ReduxStoreProvider.getInitialState();
     }
 
@@ -89,24 +91,86 @@ export default class ReduxStoreProvider {
   }
 
   /**
+   * set action and reducer now
+   * @param  {string} name [description]
+   * @return {this}
+   */
+  begin(name) {
+    name = String(name).toUpperCase();
+
+    if (this._handlers[name]) {
+      throw new TypeError(`Duplicate '${name}' exists on the begin method`);
+    }
+
+    this._name = name;
+
+    return this;
+  }
+
+  /**
+   * add action
+   * @param  {Funtion} handler handler function
+   * @return {this}
+   */
+  action(handler) {
+    if (!this._name) {
+      throw new TypeError(`Please call the function action before begin`);
+    }
+
+    if (!isFunction(handler)) {
+      throw new TypeError(`${typeof handler} is not a function`);
+    }
+
+    if (!this._handlers[this._name]) {
+      this._handlers[this._name] = {};
+    }
+
+    if (this._handlers[this._name].action) {
+      throw new TypeError(`Action: '${this._name}' already registered`);
+    } else {
+      this._handlers[this._name].action = handler.bind(null, this.type(this._name));
+    } 
+
+    return this;
+  }
+
+  /**
    * add listener in event handler
    * @method
-   * @param {string} name handler name.
    * @param {Function} handler handler function.
    * @returns {this}
    * @memberof ReduxStoreProvider
    * @description add handler.
    */
-  addHandler(name, handler) {
+  reducer(handler) {
+    if (!this._name) {
+      throw new TypeError(`Please call the function reducer before begin`);
+    }
+
     if (!isFunction(handler)) {
       throw new TypeError(`${typeof handler} is not a function`);
     }
 
-    if (this._handlers[name]) {
-      throw new TypeError(`Reducer: '${name}' already registered`);
-    } else {
-      this._handlers[name] = handler;
+    if (!this._handlers[this._name]) {
+      this._handlers[this._name] = {};
     }
+
+    if (this._handlers[this._name].reducer) {
+      throw new TypeError(`Reducer: '${this._name}' already registered`);
+    } else {
+      this._handlers[this._name].reducer = handler.bind(null, this.type(this._name));
+    }
+
+    return this;
+  }
+
+
+  /**
+   * done
+   * @return {this}
+   */
+  end() {
+    this._name = null;
 
     return this;
   }
@@ -121,11 +185,11 @@ export default class ReduxStoreProvider {
 
   /**
    * generate key
-   * @param {string} id id value
+   * @param {string} name value
    * @returns {string}
    */
-  type(id) {
-    return `${this._key}_${id}`;
+  type(name = this._name) {
+    return `${this._key}_${String(name).toUpperCase()}`;
   }
 
   /**
@@ -154,15 +218,32 @@ export default class ReduxStoreProvider {
   }
 
   /**
+   * get action.
+   * @returns {Function}
+   * @memberof ReduxStoreProvider
+   */
+  getAction() {
+    if (!this._action) {
+      if (this._type === 'list') {
+        this._action = this._actionList();
+      } else {
+        this._action = this._actionSingle();
+      }
+    }
+
+    return this._action;
+  }
+
+  /**
    * get reducer.
    * @returns {Function}
    * @memberof ReduxStoreProvider
    */
   getReducer() {
-    return this.reducer;
+    return this._reducer;
   }
 
-  _reducer(state = this._initialState, action) {
+  _reducerSingle(state = this._initialState, action) {
     const prefix = this._key + '_';
     if (action.type.indexOf(prefix) !== 0) {
       return state;
@@ -180,8 +261,8 @@ export default class ReduxStoreProvider {
         break;
       default:
         const key = action.type.substr(prefix.length);
-        if (this._handlers[key]) {
-          newState = this._handlers[key](state, action);
+        if (this._handlers[key] && this._handlers[key].reducer) {
+          newState = this._handlers[key].reducer(state, action);
         }
     }
 
@@ -237,7 +318,7 @@ export default class ReduxStoreProvider {
         }
         break;
       default:
-        newState = this._reducer(state, action);
+        newState = this._reducerSingle(state, action);
     }
 
     return newState;
@@ -245,12 +326,16 @@ export default class ReduxStoreProvider {
 
   /**
    * create action.
-   * @param {Object} [actions={}]
    * @returns {Object}
    * @memberof ReduxStoreProvider
    */
-  createAction(actions = {}) {
+  _actionSingle() {
     const key = this._key;
+    const actions = {};
+
+    for(let key in this._handlers) {
+      actions[key.toLowerCase()] = this._handlers[key].action;
+    }
 
     return {
       key,
@@ -274,11 +359,10 @@ export default class ReduxStoreProvider {
 
   /**
    * create action list.
-   * @param {Object} [actions={}]
    * @returns {Object}
    * @memberof ReduxStoreProvider
    */
-  createActionList(actions = {}) {
+  _actionList() {
     const key = this._key;
 
     return {
@@ -332,7 +416,7 @@ export default class ReduxStoreProvider {
         };
       },
 
-      ...this.createAction(actions),
+      ...this._actionSingle(),
     };
   }
 

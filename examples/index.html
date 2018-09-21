@@ -26,8 +26,15 @@
 
   const UserStore = new ReduxStoreProvider({ key: 'USER' })
     .setInitialState({value: users[0]});
-  const PostStore = new ReduxStoreProvider({ key: 'POST', type: 'list' })
-    .addHandler('LIKE', (state, action) => {
+  const PostsStore = new ReduxStoreProvider({ key: 'POST', type: 'list' })
+    .begin('like')
+    .action((type, value) => {
+      return {
+        value,
+        type,
+      };
+    })
+    .reducer((type, state, action) => {
       let newState = state;
       let index = state.list.findIndex(row => row === action.value);
       if (!!~index) {
@@ -37,18 +44,8 @@
       }
 
       return newState;
-    });
-
-  const userAction = UserStore.createAction();
-  const postAction = PostStore.createActionList({
-    like: function (value) {
-      return {
-        value,
-        type: PostStore.type('LIKE'),
-      };
-    },
-  });
-
+    })
+    .end();
 
   class Header extends React.Component {
     render() {
@@ -61,7 +58,14 @@
               ReduxStoreProvider
             </a>
             <span className="navbar-text">
-              <img className="d-inline-block align-middle" src={`https://www.gravatar.com/avatar/${md5(userStore.value.email)}?s=40`} width="20" height="20" /> <span className="d-inline-block align-middle">{userStore.value.name}</span>
+              <img
+                className="d-inline-block align-middle"
+                src={`https://www.gravatar.com/avatar/${md5(userStore.value.email)}?s=40`}
+                width="20"
+                height="20"
+              />
+              &nbsp;
+              <span className="d-inline-block align-middle">{userStore.value.name}</span>
             </span>
           </div>
         </nav>
@@ -76,22 +80,22 @@
 
       fetch('./post.json')
         .then(response => response.json())
-        .then(rows => dispatch(postAction.fill(rows)));
+        .then(rows => dispatch(postsAction.fill(rows)));
     }
     onLike(e, row) {
       const { dispatch } = this.props;
-      dispatch(postAction.like(row));
+      dispatch(postsAction.like(row));
     }
     onRemove(e, index) {
       const { dispatch } = this.props;
-      dispatch(postAction.remove(index));
+      dispatch(postsAction.remove(index));
     }
     render() {
-      const { postStore } = this.props;
+      const { postsStore } = this.props;
 
       return (
         <div>
-          {postStore.list.map((row, index) =>
+          {postsStore.list.map((row, index) =>
             <div
               key={row.id}
               className={`alert alert-${row.type}`}
@@ -119,7 +123,7 @@
       );
     }
   };
-  const CPosts = ReactRedux.connect(state => ({userStore: state.userStore, postStore: state.postStore}))(Posts);
+  const CPosts = ReactRedux.connect(state => ({userStore: state.userStore, postsStore: state.postsStore}))(Posts);
 
   class App extends React.Component {
     onRandomUser() {
@@ -128,13 +132,13 @@
       dispatch(userAction.merge(_.sample(data)));
     }
     onShufflePosts() {
-      const { dispatch, postStore } = this.props;
-      dispatch(postAction.fill(_.shuffle(postStore.list)));
+      const { dispatch, postsStore } = this.props;
+      dispatch(postsAction.fill(_.shuffle(postsStore.list)));
     }
     onAddPost() {
-      const { dispatch, postStore } = this.props;
-      dispatch(postAction.push(_.sample(postStore.list)));
-      // dispatch(postAction.unshift(_.sample(postStore.list)));
+      const { dispatch, postsStore } = this.props;
+      dispatch(postsAction.push(_.sample(postsStore.list)));
+      // dispatch(postsAction.unshift(_.sample(postsStore.list)));
     }
     render() {
       return (
@@ -178,12 +182,15 @@
       );
     }
   }
-  const CApp = ReactRedux.connect(state => ({userStore: state.userStore, postStore: state.postStore}))(App);
+  const CApp = ReactRedux.connect(state => ({userStore: state.userStore, postsStore: state.postsStore}))(App);
+
+  const userAction = UserStore.getAction();
+  const postsAction = PostsStore.getAction();
 
   const store = Redux.createStore(
     Redux.combineReducers({
       userStore: UserStore.getReducer(),
-      postStore: PostStore.getReducer(),
+      postsStore: PostsStore.getReducer(),
     })
   );
 
@@ -203,6 +210,6 @@
   <script src="https://unpkg.com/lodash@4.17.10/lodash.min.js"></script>
   <script src="https://unpkg.com/blueimp-md5@2.10.0/js/md5.min.js"></script>
 
-  <script src="https://unpkg.com/redux-store-provider@1.0.0/dist/redux-store-provider.umd.min.js"></script>
+  <script src="https://unpkg.com/redux-store-provider@2.0.0/dist/redux-store-provider.umd.min.js"></script>
 </body>
 </html>

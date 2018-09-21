@@ -111,19 +111,21 @@ function () {
     this._key = options.key;
     this._type = options.type;
     this._time = Date.now();
+    this._name = null;
 
     if (!this._key) {
       this._key = this._time.toString(36).toUpperCase();
       ++this._time;
     }
 
+    this._action = null;
     this._handlers = {};
 
     if (this._type === 'list') {
-      this.reducer = this._reducerList.bind(this);
+      this._reducer = this._reducerList.bind(this);
       this._initialState = ReduxStoreProvider.getInitialStateList();
     } else {
-      this.reducer = this._reducer.bind(this);
+      this._reducer = this._reducerSingle.bind(this);
       this._initialState = ReduxStoreProvider.getInitialState();
     }
 
@@ -134,9 +136,55 @@ function () {
     _cacheKeys.push(this._key);
   }
   /**
+   * set action and reducer now
+   * @param  {string} name [description]
+   * @return {this}
+   */
+
+
+  var _proto = ReduxStoreProvider.prototype;
+
+  _proto.begin = function begin(name) {
+    name = String(name).toUpperCase();
+
+    if (this._handlers[name]) {
+      throw new TypeError("Duplicate '" + name + "' exists on the begin method");
+    }
+
+    this._name = name;
+    return this;
+  };
+  /**
+   * add action
+   * @param  {Funtion} handler handler function
+   * @return {this}
+   */
+
+
+  _proto.action = function action(handler) {
+    if (!this._name) {
+      throw new TypeError("Please call the function action before begin");
+    }
+
+    if (!lodash.isFunction(handler)) {
+      throw new TypeError(_typeof(handler) + " is not a function");
+    }
+
+    if (!this._handlers[this._name]) {
+      this._handlers[this._name] = {};
+    }
+
+    if (this._handlers[this._name].action) {
+      throw new TypeError("Action: '" + this._name + "' already registered");
+    } else {
+      this._handlers[this._name].action = handler.bind(null, this.type(this._name));
+    }
+
+    return this;
+  };
+  /**
    * add listener in event handler
    * @method
-   * @param {string} name handler name.
    * @param {Function} handler handler function.
    * @returns {this}
    * @memberof ReduxStoreProvider
@@ -144,29 +192,49 @@ function () {
    */
 
 
-  var _proto = ReduxStoreProvider.prototype;
+  _proto.reducer = function reducer(handler) {
+    if (!this._name) {
+      throw new TypeError("Please call the function reducer before begin");
+    }
 
-  _proto.addHandler = function addHandler(name, handler) {
     if (!lodash.isFunction(handler)) {
       throw new TypeError(_typeof(handler) + " is not a function");
     }
 
-    if (this._handlers[name]) {
-      throw new TypeError("Reducer: '" + name + "' already registered");
-    } else {
-      this._handlers[name] = handler;
+    if (!this._handlers[this._name]) {
+      this._handlers[this._name] = {};
     }
 
+    if (this._handlers[this._name].reducer) {
+      throw new TypeError("Reducer: '" + this._name + "' already registered");
+    } else {
+      this._handlers[this._name].reducer = handler.bind(null, this.type(this._name));
+    }
+
+    return this;
+  };
+  /**
+   * done
+   * @return {this}
+   */
+
+
+  _proto.end = function end() {
+    this._name = null;
     return this;
   };
 
   /**
    * generate key
-   * @param {string} id id value
+   * @param {string} name value
    * @returns {string}
    */
-  _proto.type = function type(id) {
-    return this._key + "_" + id;
+  _proto.type = function type(name) {
+    if (name === void 0) {
+      name = this._name;
+    }
+
+    return this._key + "_" + String(name).toUpperCase();
   };
   /**
    * set initial state
@@ -195,6 +263,24 @@ function () {
     return this._initialState;
   };
   /**
+   * get action.
+   * @returns {Function}
+   * @memberof ReduxStoreProvider
+   */
+
+
+  _proto.getAction = function getAction() {
+    if (!this._action) {
+      if (this._type === 'list') {
+        this._action = this._actionList();
+      } else {
+        this._action = this._actionSingle();
+      }
+    }
+
+    return this._action;
+  };
+  /**
    * get reducer.
    * @returns {Function}
    * @memberof ReduxStoreProvider
@@ -202,10 +288,10 @@ function () {
 
 
   _proto.getReducer = function getReducer() {
-    return this.reducer;
+    return this._reducer;
   };
 
-  _proto._reducer = function _reducer(state, action) {
+  _proto._reducerSingle = function _reducerSingle(state, action) {
     if (state === void 0) {
       state = this._initialState;
     }
@@ -232,8 +318,8 @@ function () {
       default:
         var key = action.type.substr(prefix.length);
 
-        if (this._handlers[key]) {
-          newState = this._handlers[key](state, action);
+        if (this._handlers[key] && this._handlers[key].reducer) {
+          newState = this._handlers[key].reducer(state, action);
         }
 
     }
@@ -315,25 +401,26 @@ function () {
         break;
 
       default:
-        newState = this._reducer(state, action);
+        newState = this._reducerSingle(state, action);
     }
 
     return newState;
   };
   /**
    * create action.
-   * @param {Object} [actions={}]
    * @returns {Object}
    * @memberof ReduxStoreProvider
    */
 
 
-  _proto.createAction = function createAction(actions) {
-    if (actions === void 0) {
-      actions = {};
+  _proto._actionSingle = function _actionSingle() {
+    var key = this._key;
+    var actions = {};
+
+    for (var _key in this._handlers) {
+      actions[_key.toLowerCase()] = this._handlers[_key].action;
     }
 
-    var key = this._key;
     return Object.assign({
       key: key,
       set: function set(path, value) {
@@ -353,17 +440,12 @@ function () {
   };
   /**
    * create action list.
-   * @param {Object} [actions={}]
    * @returns {Object}
    * @memberof ReduxStoreProvider
    */
 
 
-  _proto.createActionList = function createActionList(actions) {
-    if (actions === void 0) {
-      actions = {};
-    }
-
+  _proto._actionList = function _actionList() {
     var key = this._key;
     return Object.assign({
       fill: function fill(value, total) {
@@ -379,8 +461,8 @@ function () {
         };
       },
       unshift: function unshift() {
-        for (var _len = arguments.length, value = new Array(_len), _key = 0; _key < _len; _key++) {
-          value[_key] = arguments[_key];
+        for (var _len = arguments.length, value = new Array(_len), _key2 = 0; _key2 < _len; _key2++) {
+          value[_key2] = arguments[_key2];
         }
 
         return {
@@ -394,8 +476,8 @@ function () {
         };
       },
       push: function push() {
-        for (var _len2 = arguments.length, value = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-          value[_key2] = arguments[_key2];
+        for (var _len2 = arguments.length, value = new Array(_len2), _key3 = 0; _key3 < _len2; _key3++) {
+          value[_key3] = arguments[_key3];
         }
 
         return {
@@ -404,8 +486,8 @@ function () {
         };
       },
       insert: function insert(index) {
-        for (var _len3 = arguments.length, value = new Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
-          value[_key3 - 1] = arguments[_key3];
+        for (var _len3 = arguments.length, value = new Array(_len3 > 1 ? _len3 - 1 : 0), _key4 = 1; _key4 < _len3; _key4++) {
+          value[_key4 - 1] = arguments[_key4];
         }
 
         return {
@@ -427,7 +509,7 @@ function () {
           type: key + "_REMOVE"
         };
       }
-    }, this.createAction(actions));
+    }, this._actionSingle());
   };
 
   _createClass(ReduxStoreProvider, [{

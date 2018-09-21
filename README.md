@@ -18,32 +18,69 @@ npm install redux-store-provider --save
 
 ## 手册
 ```javascript
-import ReduxStoreProvider from 'redux-store-provider'
+import Redux from 'redux';
+import ReduxStoreProvider from 'redux-store-provider';
+
+
+const UserStore = new ReduxStoreProvider({ key: 'USER' })
+  .begin('set_name')
+  // 定义 Action 触发 Reducer
+  .action((type, name) => {
+    return {
+      type,
+      name,
+    };
+  })
+  // 定义 Reducer 执行设置用户名的逻辑
+  .reducer((type, state, action) => {
+    const newState = {...state};
+    // 设置用户名
+    newState.name = action.name;
+
+    return newState;
+  })
+  .end()
+
+  .begin('set_other')
+  .action(...)
+  .reducer(...)
+  .end();
+
+const store = Redux.createStore(
+  Redux.combineReducers({
+    userStore: UserStore.getReducer()
+  })
+);
+
+// 进行设置操作
+store.dispatch(UserStore.getAction().set_name('Sanonz'));
 ```
 
 ### 成员
 
 * [ReduxStoreProvider](#new-reduxstoreprovider)
-    * `static` [type(id)](#static-typeid--string) ⇒ `string`
+    * `static` [type(name)](#static-typename--string) ⇒ `string`
     * `static` [config(options)](#static-configoptions--this) ⇒ `this`
-    * `static` [.getInitialState()](#reduxstoreprovidergetinitialstate--object) ⇒ `Object`
-    * `static` [.getInitialStateList()](#reduxstoreprovidergetinitialstatelist--object) ⇒ `Object`
+    * `static` [.getInitialState()](#static-reduxstoreprovidergetinitialstate--object) ⇒ `Object`
+    * `static` [.getInitialStateList()](#static-reduxstoreprovidergetinitialstatelist--object) ⇒ `Object`
     * [new ReduxStoreProvider()](#new-reduxstoreprovider)
-    * [.addHandler(name, handler)](#reduxstoreprovideraddhandlername-handler--this) ⇒ `this`
     * [.setInitialState(value)](#reduxstoreprovidersetinitialstatevalue--this) ⇒ `this`
-    * [.getInitialState()](#reduxstoreprovidergetinitialstate--object-1) ⇒ `Object`
+    * [.getInitialState()](#reduxstoreprovidergetinitialstate--object) ⇒ `Object`
+    * [.begin(name)](#reduxstoreproviderbeginname--this) ⇒ `this`
+    * [.action(handler)](#reduxstoreprovideractionhandler--this) ⇒ `this`
+    * [.reducer(handler)](#reduxstoreproviderreducerhandler--this) ⇒ `this`
+    * [.end()](#reduxstoreproviderend--this) ⇒ `this`
+    * [.getAction()](#reduxstoreprovidergetaction--object) ⇒ `function`
     * [.getReducer()](#reduxstoreprovidergetreducer--function) ⇒ `function`
-    * [.createAction([actions])](#reduxstoreprovidercreateactionactions--object) ⇒ `Object`
-    * [.createActionList([actions])](#reduxstoreprovidercreateactionlistactions--object) ⇒ `Object`
 
 
 
-### `static` type(id) ⇒ `string`
+### `static` type(name) ⇒ `string`
 生成一个在 Action 中使用的 `type` 字符串
 
 | Param | Type | Description |
 | --- | --- | --- |
-| id | `string` | id value |
+| name | `string` | name value |
 
 
 ### `static` config(options) ⇒ `this`
@@ -88,22 +125,13 @@ ReduxStoreProvider.config({
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [options] | `Object` | `{}` | 数据 |
-| options.key | `string` |  | 初始化 Store 的 KEY，必须具有单一性，不传的话会自动生成 |
-| options.type | `string` |  | `single` 单一型，`list` 列表型 |
+| options.key | `string` | 自动生成 | 初始化 Store 的 KEY，必须具有单一性 |
+| options.type | `string` | `single` | `single` 单一型，`list` 列表型 |
 | options.initialState | `Object` |  | 初始化 Store，将会覆盖全局默认设置 |
 
 ```javascript
-const UserStore = new ReduxStoreProvider({ key: 'POSTS' });
+const UserStore = new ReduxStoreProvider({ key: 'USER' });
 ```
-
-
-### ReduxStoreProvider.addHandler(name, handler) ⇒ `this`
-扩展一个方法，可以在 Action 中触发
-
-| Param | Type | Description |
-| --- | --- | --- |
-| name | `string` | 扩展方法名 |
-| handler | `function` | 扩展方法 |
 
 
 ### ReduxStoreProvider.setInitialState(value) ⇒ `this`
@@ -127,55 +155,42 @@ UserStore.getInitialState();
 ```
 
 
-### ReduxStoreProvider.getReducer() ⇒ `function`
-获取当前 Store 的 Reducer，包括默认和自定义
+### ReduxStoreProvider.begin(name) ⇒ `this`
+开始定义扩展会话，支持链式操作，例如：`instance.begin('like').action(fun).reducer(fun).end()`
+
+| Param | Type | Description |
+| --- | --- | --- |
+| name | `string` | 扩展方法名 |
 
 
+### ReduxStoreProvider.action(handler) ⇒ `this`
+在当前会话定义一个 Action，可以触发 Reducer
 
-### ReduxStoreProvider.createAction([actions]) ⇒ `Object`
-创建单一型 Action，在需要更新 Store 的地方调用进行更新操作
+| Param | Type | Description |
+| --- | --- | --- |
+| handler | `function` | 扩展方法 |
 
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| [actions] | `Object` | `{}` | 自定义 Action 对象 |
+### ReduxStoreProvider.reducer(handler) ⇒ `this`
+在当前会话定义一个 Reducer，可以在 Action 中触发
+
+| Param | Type | Description |
+| --- | --- | --- |
+| handler | `function` | 扩展方法 |
+
+
+### ReduxStoreProvider.end() ⇒ `this`
+关闭定义扩展会话
+
+
+### ReduxStoreProvider.getAction() ⇒ `Object`
+获取当前 Store 的 Action，包括默认和自定义
 
 #### 默认的 Action 列表
 * `action.set(path, value)`
 * `action.merge(value)`
 
-自定义 Action
-```javascript
-// 首先定义 Reducer 执行设置用户名的逻辑
-UserStore.addHandler('set_name', (state, action) => {
-  const newState = {...state};
-  // 设置用户名
-  newState.name = action.value;
-
-  return newState;
-});
-// 然后定义触发 Reducer 逻辑的 Action
-const userAction = UserStore.createAction({
-  setName: function (value) {
-    return {
-      value,
-      type: UserStore.type('set_name'),
-    };
-  },
-});
-// 进行设置操作
-store.dispatch(userAction.setName('Sanonz'));
-```
-
-
-### ReduxStoreProvider.createActionList([actions]) ⇒ `Object`
-创建列表型 Action，在需要更新 Store 的地方调用进行更新操作
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| [actions] | `Object` | `{}` | 自定义 Action 对象 |
-
-#### 默认的 Action 列表
+#### 列表型同时包含一下方法
 * `action.fill(value, total)`
 * `action.shift()`
 * `action.unshift(value)`
@@ -184,9 +199,13 @@ store.dispatch(userAction.setName('Sanonz'));
 * `action.insert(index, value)`
 * `action.replace(index, value)`
 * `action.remove(index)`
-* 以及 [.createAction([actions])](#reduxstoreprovidercreateactionactions--object)  的所有 Action 列表
+
+
+### ReduxStoreProvider.getReducer() ⇒ `function`
+获取当前 Store 的 Reducer，包括默认和自定义
+
 
 
 ## 例子
 
-查看博客：[使用 redux-store-provider 简化 react 开发流程](https://sanonz.github.io/2018/redux-store-provider-example/)
+查看博客：[使用 redux-store-provider 简化 react 开发流程](https://sanonz.github.io/2018/redux-store-provider-example-v2/)
