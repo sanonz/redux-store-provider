@@ -137,8 +137,10 @@
     }
     onAddPost() {
       const { dispatch, postsStore } = this.props;
-      dispatch(postsAction.push(_.sample(postsStore.list)));
-      // dispatch(postsAction.unshift(_.sample(postsStore.list)));
+      const data = _.cloneDeep(_.sample(postsStore.list));
+      data.id = postsStore.list.length + 1;
+      dispatch(postsAction.push(data));
+      // dispatch(postsAction.unshift(data));
     }
     render() {
       return (
