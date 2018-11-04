@@ -1,6 +1,12 @@
 'use strict';
 
-var lodash = require('lodash');
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var set = _interopDefault(require('lodash/set'));
+var merge = _interopDefault(require('lodash/merge'));
+var cloneDeep = _interopDefault(require('lodash/cloneDeep'));
+var isNumber = _interopDefault(require('lodash/isNumber'));
+var isFunction = _interopDefault(require('lodash/isFunction'));
 
 function _typeof(obj) {
   if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
@@ -36,7 +42,7 @@ var _cacheKeys = [];
 var initialState = {
   value: {}
 };
-var initialStateList = lodash.merge({
+var initialStateList = merge({
   list: [],
   total: 0
 }, initialState);
@@ -58,11 +64,11 @@ function () {
    */
   ReduxStoreProvider.config = function config(options) {
     if (options.initialState) {
-      lodash.merge(initialState, options.initialState);
+      merge(initialState, options.initialState);
     }
 
     if (options.initialStateList) {
-      lodash.merge(initialStateList, options.initialStateList);
+      merge(initialStateList, options.initialStateList);
     }
 
     return this;
@@ -76,7 +82,7 @@ function () {
 
 
   ReduxStoreProvider.getInitialState = function getInitialState() {
-    return lodash.cloneDeep(initialState);
+    return cloneDeep(initialState);
   };
   /**
    * get initial state list.
@@ -87,7 +93,7 @@ function () {
 
 
   ReduxStoreProvider.getInitialStateList = function getInitialStateList() {
-    return lodash.merge(lodash.cloneDeep(initialStateList), initialState);
+    return merge(cloneDeep(initialStateList), initialState);
   };
   /**
    * Creates an instance of ReduxStoreProvider.
@@ -166,7 +172,7 @@ function () {
       throw new TypeError("Please call the function action before begin");
     }
 
-    if (!lodash.isFunction(handler)) {
+    if (!isFunction(handler)) {
       throw new TypeError(_typeof(handler) + " is not a function");
     }
 
@@ -197,7 +203,7 @@ function () {
       throw new TypeError("Please call the function reducer before begin");
     }
 
-    if (!lodash.isFunction(handler)) {
+    if (!isFunction(handler)) {
       throw new TypeError(_typeof(handler) + " is not a function");
     }
 
@@ -247,7 +253,7 @@ function () {
 
 
   _proto.setInitialState = function setInitialState(value) {
-    lodash.merge(this._initialState, value);
+    merge(this._initialState, value);
     return this;
   };
   /**
@@ -306,13 +312,13 @@ function () {
 
     switch (action.type) {
       case this.type('SET'):
-        newState = lodash.cloneDeep(state);
-        lodash.set(newState.value, action.path, action.value);
+        newState = cloneDeep(state);
+        set(newState.value, action.path, action.value);
         break;
 
       case this.type('MERGE'):
-        newState = lodash.cloneDeep(state);
-        lodash.merge(newState.value, action.value);
+        newState = cloneDeep(state);
+        merge(newState.value, action.value);
         break;
 
       default:
@@ -342,46 +348,46 @@ function () {
 
     switch (action.type) {
       case this.type('FILL'):
-        newState = lodash.cloneDeep(state);
+        newState = cloneDeep(state);
         newState.list = action.value;
-        newState.total = lodash.isNumber(+action.total) ? action.total : action.value.length;
+        newState.total = isNumber(+action.total) ? action.total : action.value.length;
         break;
 
       case this.type('SHIFT'):
-        newState = lodash.cloneDeep(state);
+        newState = cloneDeep(state);
         newState.list.shift();
         break;
 
       case this.type('UNSHIFT'):
-        newState = lodash.cloneDeep(state);
+        newState = cloneDeep(state);
 
         (_newState$list = newState.list).unshift.apply(_newState$list, action.value);
 
         break;
 
       case this.type('POP'):
-        newState = lodash.cloneDeep(state);
+        newState = cloneDeep(state);
         newState.list.pop();
         break;
 
       case this.type('PUSH'):
-        newState = lodash.cloneDeep(state);
+        newState = cloneDeep(state);
 
         (_newState$list2 = newState.list).push.apply(_newState$list2, action.value);
 
         break;
 
       case this.type('INSERT'):
-        newState = lodash.cloneDeep(state);
+        newState = cloneDeep(state);
 
         (_newState$list3 = newState.list).splice.apply(_newState$list3, [action.index, 0].concat(action.value));
 
         break;
 
       case this.type('REPLACE'):
-        newState = lodash.cloneDeep(state);
+        newState = cloneDeep(state);
 
-        if (lodash.isFunction(action.index)) {
+        if (isFunction(action.index)) {
           newState.list = newState.list.map(action.index);
         } else {
           newState.list.splice(action.index, 1, action.value);
@@ -390,9 +396,9 @@ function () {
         break;
 
       case this.type('REMOVE'):
-        newState = lodash.cloneDeep(state);
+        newState = cloneDeep(state);
 
-        if (lodash.isFunction(action.index)) {
+        if (isFunction(action.index)) {
           newState.list = newState.list.filter(action.index);
         } else {
           newState.list.splice(action.index, 1);
@@ -423,14 +429,14 @@ function () {
 
     return Object.assign({
       key: key,
-      set: function set(path, value) {
+      set: function set$$1(path, value) {
         return {
           path: path,
           value: value,
           type: key + "_SET"
         };
       },
-      merge: function merge(value) {
+      merge: function merge$$1(value) {
         return {
           value: value,
           type: key + "_MERGE"
@@ -517,7 +523,7 @@ function () {
     get: function get() {
       return this._key;
     },
-    set: function set(value) {
+    set: function set$$1(value) {
       throw new TypeError("set value not allowed for key");
     }
   }]);

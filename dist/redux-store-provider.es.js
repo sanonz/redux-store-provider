@@ -1,4 +1,8 @@
-import { set, merge, cloneDeep, isNumber, isFunction } from 'lodash';
+import set from 'lodash/set';
+import merge from 'lodash/merge';
+import cloneDeep from 'lodash/cloneDeep';
+import isNumber from 'lodash/isNumber';
+import isFunction from 'lodash/isFunction';
 
 function _typeof(obj) {
   if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
