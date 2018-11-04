@@ -1,6 +1,6 @@
 {
   "name": "redux-store-provider",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "redux store provider",
   "main": "dist/redux-store-provider.cjs.js",
   "module": "dist/redux-store-provider.es.js",
@@ -34,6 +34,7 @@
     "lodash": "^4.17.10"
   },
   "devDependencies": {
+    "@babel/core": "^7.1.2",
     "babel-preset-env": "^7.0.0-beta.3",
     "rollup": "^0.65.0",
     "rollup-plugin-babel": "^4.0.0-beta.8",

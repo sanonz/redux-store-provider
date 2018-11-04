@@ -12,12 +12,18 @@ const config = {
     file: 'dist/redux-store-provider.umd.js',
     format: 'umd',
     name: 'ReduxStoreProvider',
-    globals: { lodash: '_' },
+    globals: {
+      'lodash/set': '_.set',
+      'lodash/merge': '_.merge',
+      'lodash/cloneDeep': '_.cloneDeep',
+      'lodash/isNumber': '_.isNumber',
+      'lodash/isFunction': '_.isFunction'
+    },
   }, {
     file: 'dist/redux-store-provider.es.js',
     format: 'es',
   }],
-  external:['lodash'],
+  external: ['lodash/set', 'lodash/merge', 'lodash/cloneDeep', 'lodash/isNumber', 'lodash/isFunction'],
   plugins: [
     resolve(),
     babel({
